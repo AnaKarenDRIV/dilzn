@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h2>Panel de la Empresa</h2>
+</div>
+
+<!-- Stats Section -->
+<div class="stats-container"
+    style="display: flex; gap: 20px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap;">
+    <div class="stat-card"
+        style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); flex: 1; min-width: 200px; text-align: center;">
+        <h3 style="color: #2c3e50; font-size: 2em; margin: 0;">{{ active_vacancies }}</h3>
+        <p style="color: #7f8c8d; margin: 5px 0 0;">Vacantes Activas</p>
+    </div>
+    <div class="stat-card"
+        style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); flex: 1; min-width: 200px; text-align: center;">
+        <h3 style="color: #2c3e50; font-size: 2em; margin: 0;">{{ total_views }}</h3>
+        <p style="color: #7f8c8d; margin: 5px 0 0;">Visitas Totales</p>
+    </div>
+    <div class="stat-card"
+        style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); flex: 1; min-width: 200px; text-align: center;">
+        <h3 style="color: #2c3e50; font-size: 2em; margin: 0;">{{ total_applicants }}</h3>
+        <p style="color: #7f8c8d; margin: 5px 0 0;">Postulaciones</p>
+    </div>
+</div>
+
+<!-- Manage Vacancies Section -->
+<div class="dashboard-header">
+    <h3>Gestionar Vacantes</h3>
+</div>
+
+<div class="card-list" style="margin-bottom: 40px;">
+    {% for vacancy in vacancies %}
+    <div class="card" style="position: relative; opacity: {{ '0.7' if vacancy.status == 'finalized' else '1' }};">
+        {% if vacancy.status == 'finalized' %}
+        <div
+            style="position: absolute; top: 10px; right: 10px; background: #e74c3c; color: white; padding: 5px 10px; border-radius: 5px; font-size: 0.8em;">
+            Finalizada</div>
+        {% endif %}
+        <h3>{{ vacancy.title }}</h3>
+        <p><strong>Vistas:</strong> {{ vacancy.views or 0 }}</p>
+        <p><strong>Publicado:</strong> {{ vacancy.created_at.strftime('%Y-%m-%d') if vacancy.created_at else 'N/A' }}
+        </p>
+
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <a href="{{ url_for('modify_vacancy', vacancy_id=vacancy._id) }}" class="btn"
+                style="background-color: #f39c12;">Modificar</a>
+            {% if vacancy.status != 'finalized' %}
+            <button class="btn" style="background-color: #e74c3c;"
+                onclick="finalizeVacancy('{{ vacancy._id }}')">Finalizar</button>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <p>No has publicado ninguna vacante aún.</p>
+    {% endfor %}
+</div>
+
+<!-- Publish New Vacancy Section -->
+<div class="dashboard-header">
+    <h3>Publicar Nueva Vacante</h3>
+</div>
+
+<div class="auth-container" style="margin: 0 auto 40px; max-width: 100%;">
+    <form method="POST">
+        <div class="form-group">
+            <label>Título de la Vacante</label>
+            <input type="text" name="title" required>
+        </div>
+
+        <div class="form-group">
+            <label>Requisitos</label>
+            <textarea name="requirements" required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Licenciatura Deseada</label>
+            <input type="text" name="degree" required>
+        </div>
+
+        <div class="form-group">
+            <label>Sueldo</label>
+            <input type="text" name="salary" required>
+        </div>
+
+        <div class="form-group">
+            <label>Horario Laboral</label>
+            <input type="text" name="hours" required>
+        </div>
+
+        <button type="submit" class="btn">Publicar Vacante</button>
+    </form>
+</div>
+
+<script>
+    function finalizeVacancy(vacancyId) {
+        if (confirm('¿Estás seguro de que deseas finalizar esta vacante? Ya no será visible para los candidatos.')) {
+            fetch('/finalize_vacancy/' + vacancyId, {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Ocurrió un error al procesar tu solicitud.');
+                });
+        }
+    }
+</script>
+{% endblock %}
